@@ -5,3 +5,5 @@ http://davidwinter.me/articles/2011/06/18/simple-local-web-development-with-apac
 Forward port 80 to 10969 using these:
 
 http://obscuredclarity.blogspot.com.au/2011/05/port-forwarding-80-to-8080-for-tomcat.html
+
+Note: This resets when you restart your computer; see how Pow does it
