@@ -30,13 +30,11 @@ class Service
             readyCallback()
             return
 
-        console.log "About to start up #{@name}"
         freeport (err, port) =>
-            console.log "Starting up #{@name} on localhost:#{port}"
             @port = port
             processName = "#{@serviceManager.config.dir}/#{@name}"
             @process = childProcess.spawn processName, [@port]
-            console.log "#{@name} is now running on PID #{@process.pid}"
+            console.log "#{@name}: running on port #{port}, PID #{@process.pid}"
 
             # Redirect stdout and stderr
             @process.stdout.on 'data', (data) =>
@@ -48,7 +46,7 @@ class Service
 
             # handle the server closing down
             @process.on 'close', (code, signal) =>
-                console.log "Child process exited with code #{code}"
+                console.log "#{@name}: stopped, code #{code}, signal #{signal}"
                 @port = null
                 @process = null
 
@@ -63,7 +61,7 @@ class Service
     stop: =>
         # Kills the server process, and all its children (such as those spawned
         # by e.g. Django's autoreloader or a shell script w/o exec).
-        console.log "Stopping #{@name}"
+        console.log "#{@name}: stop requested"
         if @process?
             psTree @process.pid, (err, children) =>
                 for child in children
