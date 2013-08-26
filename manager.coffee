@@ -1,9 +1,12 @@
 httpProxy = require 'http-proxy'
 http = require 'http'
+path = require 'path'
 service = require './service'
 
+HOME = process.env.HOME or process.env.HOMEPATH or process.env.USERPROFILE
+
 DEFAULT_CONFIG =
-    dir: "/Users/adam/.wow"
+    dir: path.join HOME, ".wow"
     timeout: 20000
 
 class ServiceManager
