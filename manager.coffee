@@ -4,7 +4,7 @@ service = require './service'
 
 DEFAULT_CONFIG =
     dir: "/Users/adam/.wow"
-    timeout: 20
+    timeout: 20000
 
 class ServiceManager
     constructor: (config) ->

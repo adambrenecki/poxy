@@ -8,8 +8,13 @@ class Service
         @name = name
         @port = null
         @process = null
+        @stopTimeout = null
 
     start: (readyCallback) =>
+        if @stopTimeout?
+            clearTimeout @stopTimeout
+        @stopTimeout = setTimeout @stop, @serviceManager.config.timeout
+
         if @process?
             readyCallback()
             return
@@ -33,9 +38,6 @@ class Service
                 console.log "#{@name}: stopped, code #{code}, signal #{signal}"
                 @port = null
                 @process = null
-
-            # set a timeout to shut the server down
-            setTimeout @stop, 5000
 
             # TODO: Wait until the server is ready to accept connections
             # before running the callback
