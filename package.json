@@ -1,6 +1,17 @@
-{ "name": "wow"
-, "description": "A zero-configuration server process manager + proxy for development in any language."
-, "version": "0.1.0dev"
+{ "name": "poxy"
+, "version": "0.1.0-dev"
+, "description": "A zero-configuration dev server process manager + proxy for development in any language."
+, "keywords": ["development", "development-tools", "proxy", "process-manager"]
+, "homepage": "https://github.com/adambrenecki/poxy"
+, "bugs": {"url": "https://github.com/adambrenecki/poxy/issues"}
+, "license": "MIT"
+, "author":
+    { "name": "Adam Brenecki"
+    , "email": "adam@brenecki.id.au"
+    , "url": "https://adam.brenecki.id.au/"
+    }
+, "main": "manager"
+, "bin": "./run.coffee"
 , "dependencies":
     { "http-proxy": "~0.10"
     , "freeport": "~1.0"

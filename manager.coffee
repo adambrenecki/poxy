@@ -6,8 +6,8 @@ service = require './service'
 HOME = process.env.HOME or process.env.HOMEPATH or process.env.USERPROFILE
 
 DEFAULT_CONFIG =
-    dir: path.join HOME, ".wow"
-    timeout: 20000
+    dir: path.join HOME, ".poxy"
+    timeout: 3600000
 
 class ServiceManager
     constructor: (config) ->

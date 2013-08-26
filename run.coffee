@@ -1,3 +1,5 @@
+#!/usr/bin/env coffee
+
 manager = require './manager'
 
 m = new manager.ServiceManager()
