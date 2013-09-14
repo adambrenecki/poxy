@@ -10,7 +10,7 @@
     , "email": "adam@brenecki.id.au"
     , "url": "https://adam.brenecki.id.au/"
     }
-, "main": "manager"
+, "main": "src/manager"
 , "bin": "./bin/poxy"
 , "dependencies":
     { "http-proxy": "~0.10"

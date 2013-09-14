@@ -22,7 +22,7 @@ module.exports =
         plistLocation = process.env.HOME + "/Library/LaunchAgents/au.id.brenecki.adam.poxy.plist"
 
         async.parallel [
-            (cb) -> writeTemplateToFile "./plist.hbs", plistLocation, cb,
+            (cb) -> writeTemplateToFile "./templates/plist.hbs", plistLocation, cb,
                 nodePath: process.execPath
                 scriptPath: process.argv[1]
                 arg: "run"

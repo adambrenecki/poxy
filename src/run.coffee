@@ -6,7 +6,7 @@ switch process.argv[2]
         m = new manager.ServiceManager()
         m.listen(10969)
     when 'install'
-        install = require './install/install'
+        install = require './install'
         install.macosx()
     when undefined
         console.log "What? Be more specific."
