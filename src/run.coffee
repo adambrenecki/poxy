@@ -3,8 +3,11 @@
 switch process.argv[2]
     when 'run'
         proxy = require './proxy'
+        dns = require './dns'
         m = new proxy.ServiceManager()
-        m.listen(10969)
+        d = new dns()
+        m.listen(17699)
+        d.listen(17698)
     when 'install'
         install = require './install'
         install.macosx()
