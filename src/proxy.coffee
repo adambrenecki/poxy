@@ -1,6 +1,37 @@
 freeport = require 'freeport'
 childProcess = require 'child_process'
 psTree = require 'ps-tree'
+httpProxy = require 'http-proxy'
+http = require 'http'
+path = require 'path'
+
+HOME = process.env.HOME or process.env.HOMEPATH or process.env.USERPROFILE
+
+DEFAULT_CONFIG =
+    dir: path.join HOME, ".poxy"
+    timeout: 3600000
+
+class ServiceManager
+    constructor: (config) ->
+        @config = config or DEFAULT_CONFIG
+        @services = {}
+    getService: (name) =>
+        if @services[name]?
+            return @services[name]
+        else
+            service = new Service(this, name)
+            @services[name] = service
+            return service
+    getProxy: =>
+        myProxy = httpProxy.createServer (req, res, proxy) =>
+            service = @getService(req.headers.host)
+            service.start ->
+                proxy.proxyRequest req, res,
+                    host: 'localhost'
+                    port: service.port
+        return myProxy
+    listen: (port) =>
+        @getProxy().listen(port)
 
 class Service
     constructor: (serviceManager, name) ->
@@ -54,5 +85,6 @@ class Service
                     process.kill(child.PID)
                 @process.kill()
 
-exports.Service = Service
-
+module.exports =
+    ServiceManager: ServiceManager
+    Service: Service

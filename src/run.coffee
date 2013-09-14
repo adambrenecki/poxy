@@ -2,8 +2,8 @@
 
 switch process.argv[2]
     when 'run'
-        manager = require './manager'
-        m = new manager.ServiceManager()
+        proxy = require './proxy'
+        m = new proxy.ServiceManager()
         m.listen(10969)
     when 'install'
         install = require './install'
