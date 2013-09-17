@@ -19,15 +19,24 @@ checkCall = (cmd, args, callback) ->
 
 module.exports =
     darwin: ->
+        if not process.env.SUDO_UID?
+            console.log "Please run this command using sudo."
+            process.exit(1)
+
         plistLocation = process.env.HOME + "/Library/LaunchAgents/au.id.brenecki.adam.poxy.plist"
+        plistLocationIpfw = "/Library/LaunchAgents/au.id.brenecki.adam.poxy.ipfw.plist"
 
         async.parallel [
             (cb) -> writeTemplateToFile "./templates/plist.hbs", plistLocation, cb,
                 nodePath: process.execPath
                 scriptPath: process.argv[1]
                 arg: "run"
+            (cb) -> writeTemplateToFile "./templates/resolver.hbs", "/etc/resolver/dev", cb, {}
+            (cb) -> writeTemplateToFile "./templates/plist-ipfw.hbs", plistLocationIpfw, cb, {}
             (cb) -> checkCall "launchctl", ["load", plistLocation], cb
             (cb) -> checkCall "launchctl", ["start", "au.id.brenecki.adam.poxy"], cb
+            (cb) -> checkCall "launchctl", ["load", plistLocationIpfw], cb
+            (cb) -> checkCall "launchctl", ["start", "au.id.brenecki.adam.poxy.ipfw"], cb
         ]
     linux: -> console.log("Auto-install isn't supported yet on this OS.")
     win32: -> console.log("Auto-install isn't supported yet on this OS.")
