@@ -18,7 +18,7 @@ checkCall = (cmd, args, callback) ->
 
 
 module.exports =
-    macosx: ->
+    darwin: ->
         plistLocation = process.env.HOME + "/Library/LaunchAgents/au.id.brenecki.adam.poxy.plist"
 
         async.parallel [
@@ -29,3 +29,7 @@ module.exports =
             (cb) -> checkCall "launchctl", ["load", plistLocation], cb
             (cb) -> checkCall "launchctl", ["start", "au.id.brenecki.adam.poxy"], cb
         ]
+    linux: -> console.log("Auto-install isn't supported yet on this OS.")
+    win32: -> console.log("Auto-install isn't supported yet on this OS.")
+    freebsd: -> console.log("Auto-install isn't supported yet on this OS.")
+    sunos: -> console.log("Auto-install isn't supported yet on this OS.")

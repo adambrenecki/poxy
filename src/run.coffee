@@ -10,7 +10,7 @@ switch process.argv[2]
         d.listen(17698)
     when 'install'
         install = require './install'
-        install.macosx()
+        install[process.platform]()
     when undefined
         console.log "What? Be more specific."
     else
