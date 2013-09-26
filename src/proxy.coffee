@@ -4,11 +4,13 @@ psTree = require 'ps-tree'
 httpProxy = require 'http-proxy'
 http = require 'http'
 path = require 'path'
+fs = require 'fs'
 
 HOME = process.env.HOME or process.env.HOMEPATH or process.env.USERPROFILE
 
 DEFAULT_CONFIG =
     dir: path.join HOME, ".poxy"
+    logdir: path.join HOME, ".poxylogs"
     timeout: 3600000
 
 class ServiceManager
@@ -56,13 +58,17 @@ class Service
             @process = childProcess.spawn processName, [@port]
             console.log "#{@name}: running on port #{port}, PID #{@process.pid}"
 
-            # Redirect stdout and stderr
+            # Redirect stdout and stderr to a file
+            out = fs.createWriteStream path.join(@serviceManager.config.logdir, @name), {flags: 'a', encoding: 'utf8'}
             @process.stdout.on 'data', (data) =>
                 console.log "#{@name} stdout: #{data}"
+                out.write data
             @process.stderr.on 'data', (data) =>
                 console.log "#{@name} stderr: #{data}"
+                out.write data
             @process.on 'error', (error) =>
                 console.log "#{@name} error: #{error}"
+                out.write "[poxy] encountered error: #{error}\n"
 
             # handle the server closing down
             @process.on 'close', (code, signal) =>
