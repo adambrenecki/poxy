@@ -86,7 +86,10 @@ class Service
         # by e.g. Django's autoreloader or a shell script w/o exec).
         console.log "#{@name}: stop requested"
         if @process?
+            @process.kill('SIGSTOP')
             psTree @process.pid, (err, children) =>
+                for child in children
+                    process.kill(child.PID, 'SIGSTOP')
                 for child in children
                     process.kill(child.PID)
                 @process.kill()
