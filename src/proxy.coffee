@@ -5,6 +5,7 @@ httpProxy = require 'http-proxy'
 http = require 'http'
 path = require 'path'
 fs = require 'fs'
+net = require 'net'
 
 HOME = process.env.HOME or process.env.HOMEPATH or process.env.USERPROFILE
 
@@ -76,10 +77,22 @@ class Service
                 @port = null
                 @process = null
 
-            # TODO: Wait until the server is ready to accept connections
-            # before running the callback
+            # wait until it starts responding to TCP connections before connecting
+            tester = =>
+                if @process # don't keep trying to connect if the process crashes
+                    console.log "testing", @name
+                    testClient = net.createConnection @port, () ->
+                        testClient.end()
+                        console.log 'connection successful'
+                    testClient.on 'end', () ->
+                        console.log 'ready'
+                        readyCallback()
+                    testClient.on 'error', (e) ->
+                        console.log e
+                        if e.code in ['ECONNREFUSED']
+                            setTimeout tester, 1000
+            tester()
 
-            readyCallback()
 
     stop: =>
         # Kills the server process, and all its children (such as those spawned
