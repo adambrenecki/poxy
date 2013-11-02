@@ -26,18 +26,19 @@ module.exports =
         plistLocation = process.env.HOME + "/Library/LaunchAgents/au.id.brenecki.adam.poxy.plist"
         plistLocationIpfw = "/Library/LaunchAgents/au.id.brenecki.adam.poxy.ipfw.plist"
 
-        async.parallel [
+        async.series [
             (cb) -> writeTemplateToFile "./templates/plist.hbs", plistLocation, cb,
                 nodePath: process.execPath
                 scriptPath: process.argv[1]
                 arg: "run"
+            (cb) -> checkCall "mkdir", ["-p", "/etc/resolver"], cb
             (cb) -> writeTemplateToFile "./templates/resolver.hbs", "/etc/resolver/dev", cb, {}
             (cb) -> writeTemplateToFile "./templates/plist-ipfw.hbs", plistLocationIpfw, cb, {}
             (cb) -> checkCall "launchctl", ["load", plistLocation], cb
             (cb) -> checkCall "launchctl", ["start", "au.id.brenecki.adam.poxy"], cb
             (cb) -> checkCall "launchctl", ["load", plistLocationIpfw], cb
             (cb) -> checkCall "launchctl", ["start", "au.id.brenecki.adam.poxy.ipfw"], cb
-        ]
+        ], (err) -> console.log err if err
     linux: -> console.log("Auto-install isn't supported yet on this OS.")
     win32: -> console.log("Auto-install isn't supported yet on this OS.")
     freebsd: -> console.log("Auto-install isn't supported yet on this OS.")
