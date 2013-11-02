@@ -43,15 +43,28 @@ class Service
         @port = null
         @process = null
         @stopTimeout = null
+        @state = @states.stopped
+        @readyCallbacks = []
+
+    states:
+        stopped: 0
+        starting: 1
+        running: 2
 
     start: (readyCallback) =>
         if @stopTimeout?
             clearTimeout @stopTimeout
         @stopTimeout = setTimeout @stop, @serviceManager.config.timeout
 
-        if @process?
+        if @state == @states.running
             readyCallback()
             return
+        if @state == @states.starting
+            @readyCallbacks.push readyCallback
+            return
+
+        @state = @states.starting
+
 
         freeport (err, port) =>
             @port = port
@@ -76,19 +89,20 @@ class Service
                 console.log "#{@name}: stopped, code #{code}, signal #{signal}"
                 @port = null
                 @process = null
+                @state = @states.stopped
 
             # wait until it starts responding to TCP connections before connecting
             tester = =>
                 if @process # don't keep trying to connect if the process crashes
-                    console.log "testing", @name
                     testClient = net.createConnection @port, () ->
                         testClient.end()
-                        console.log 'connection successful'
-                    testClient.on 'end', () ->
-                        console.log 'ready'
+                    testClient.on 'end', () =>
+                        # ready to run
+                        @state = @states.running
                         readyCallback()
+                        for c in @readyCallbacks
+                            c()
                     testClient.on 'error', (e) ->
-                        console.log e
                         if e.code in ['ECONNREFUSED']
                             setTimeout tester, 1000
             tester()
