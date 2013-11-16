@@ -4,17 +4,25 @@ async = require 'async'
 require 'handlebars'
 
 writeTemplateToFile = (templatePath, filePath, callback, context) ->
+    console.log "# rendering #{templatePath} to #{filePath}"
     template = require templatePath
     content = template(context)
     fs.writeFile filePath, content, callback
 
 checkCall = (cmd, args, callback) ->
+    console.log "#{cmd} #{args.join(" ")}"
     proc = childProcess.spawn(cmd, args)
+    proc.stdout.on 'data', (data) ->
+        console.log '' + data
+    proc.stderr.on 'data', (data) ->
+        console.log '' + data
     proc.on 'close', (code) ->
         if code == 0
             callback()
         else
-            callback("Error: #{cmd} #{args} returned #{code}")
+            e = "Error: #{cmd} #{args} returned #{code}"
+            console.log e
+            callback(e)
 
 
 module.exports =
@@ -38,8 +46,12 @@ module.exports =
             (cb) -> checkCall "launchctl", ["start", "au.id.brenecki.adam.poxy"], cb
             (cb) -> checkCall "launchctl", ["load", plistLocationIpfw], cb
             (cb) -> checkCall "launchctl", ["start", "au.id.brenecki.adam.poxy.ipfw"], cb
-        ], (err) -> console.log err if err
-    linux: -> console.log("Auto-install isn't supported yet on this OS.")
-    win32: -> console.log("Auto-install isn't supported yet on this OS.")
-    freebsd: -> console.log("Auto-install isn't supported yet on this OS.")
-    sunos: -> console.log("Auto-install isn't supported yet on this OS.")
+        ], (err) ->
+            if err
+                console.log "Oh no! #{err}"
+            else
+                console.log "Ready to go!"
+    linux: -> console.log("Auto-install isn't supported yet on Linux.")
+    win32: -> console.log("Auto-install isn't supported yet on Windows.")
+    freebsd: -> console.log("Auto-install isn't supported yet on FreeBSD.")
+    sunos: -> console.log("Auto-install isn't supported yet on SunOS.")
