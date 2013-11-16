@@ -102,6 +102,7 @@ class Service
                         readyCallback()
                         for c in @readyCallbacks
                             c()
+                        @readyCallbacks = []
                     testClient.on 'error', (e) ->
                         if e.code in ['ECONNREFUSED']
                             setTimeout tester, 1000
