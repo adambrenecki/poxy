@@ -43,29 +43,22 @@ class Service
         @port = null
         @process = null
         @stopTimeout = null
-        @state = @states.stopped
         @readyCallbacks = []
-
-    states:
-        stopped: 0
-        starting: 1
-        running: 2
 
     start: (readyCallback) =>
         if @stopTimeout?
             clearTimeout @stopTimeout
         @stopTimeout = setTimeout @stop, @serviceManager.config.timeout
 
-        if @state == @states.running
+        if @state() == 'running'
             readyCallback()
             return
-        if @state == @states.starting
-            @readyCallbacks.push readyCallback
+
+        @readyCallbacks.push readyCallback
+        if @state() == 'starting'
             return
 
-        @state = @states.starting
-
-
+        @state 'starting'
         freeport (err, port) =>
             @port = port
             processName = "#{@serviceManager.config.dir}/#{@name}"
@@ -89,7 +82,7 @@ class Service
                 console.log "#{@name}: stopped, code #{code}, signal #{signal}"
                 @port = null
                 @process = null
-                @state = @states.stopped
+                @state 'stopped'
 
             # wait until it starts responding to TCP connections before connecting
             tester = =>
@@ -98,11 +91,7 @@ class Service
                         testClient.end()
                     testClient.on 'end', () =>
                         # ready to run
-                        @state = @states.running
-                        readyCallback()
-                        for c in @readyCallbacks
-                            c()
-                        @readyCallbacks = []
+                        @state 'running'
                     testClient.on 'error', (e) ->
                         if e.code in ['ECONNREFUSED']
                             setTimeout tester, 1000
@@ -121,6 +110,24 @@ class Service
                 for child in children
                     process.kill(child.PID)
                 @process.kill()
+
+    state: (newState) =>
+        # Keeps track of state and runs certain state-transition tasks
+        oldState = @__state
+        if not newState?
+            console.log "oldState requested"
+            return oldState
+        if newState not in ['stopped', 'starting', 'running']
+            throw new Error("Invalid state #{newState}")
+        console.log "#{oldState} -> #{newState}"
+        @__state = newState
+
+        # state-transition tasks
+        if oldState == 'starting'
+            if newState == 'running'
+                for callback in @readyCallbacks
+                    callback()
+            @readyCallbacks = []
 
 module.exports =
     ServiceManager: ServiceManager
