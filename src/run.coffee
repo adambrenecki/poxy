@@ -2,9 +2,11 @@
 
 switch process.argv[2]
     when 'run'
+        processmgr = require './processmgr'
         proxy = require './proxy'
         dns = require './dns'
-        m = new proxy.ServiceManager()
+        serviceManager = new processmgr.ServiceManager()
+        m = new proxy(serviceManager)
         d = new dns()
         m.listen(17699)
         d.listen(17698)
