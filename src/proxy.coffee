@@ -63,23 +63,23 @@ class Service
             @port = port
             processName = "#{@serviceManager.config.dir}/#{@name}"
             @process = childProcess.spawn processName, [@port]
-            console.log "#{@name}: running on port #{port}, PID #{@process.pid}"
+            @log 'starter', "running on #{port}, PID #{@process.pid}"
 
             # Redirect stdout and stderr to a file
             out = fs.createWriteStream path.join(@serviceManager.config.logdir, @name), {flags: 'a', encoding: 'utf8'}
             @process.stdout.on 'data', (data) =>
-                console.log "#{@name} stdout: #{data}"
+                @log 'stdout', data
                 out.write data
             @process.stderr.on 'data', (data) =>
-                console.log "#{@name} stderr: #{data}"
+                @log 'stderr', data
                 out.write data
             @process.on 'error', (error) =>
-                console.log "#{@name} error: #{error}"
+                @log 'error', error
                 out.write "[poxy] encountered error: #{error}\n"
 
             # handle the server closing down
             @process.on 'close', (code, signal) =>
-                console.log "#{@name}: stopped, code #{code}, signal #{signal}"
+                @log 'close', "code #{code}, signal #{signal}"
                 @port = null
                 @process = null
                 @state 'stopped'
@@ -101,7 +101,7 @@ class Service
     stop: =>
         # Kills the server process, and all its children (such as those spawned
         # by e.g. Django's autoreloader or a shell script w/o exec).
-        console.log "#{@name}: stop requested"
+        @log 'executioner', 'kill requested'
         if @process?
             psTree @process.pid, (err, children) =>
                 for child in children
@@ -112,11 +112,10 @@ class Service
         # Keeps track of state and runs certain state-transition tasks
         oldState = @__state
         if not newState?
-            console.log "oldState requested"
             return oldState
         if newState not in ['stopped', 'starting', 'running']
             throw new Error("Invalid state #{newState}")
-        console.log "#{oldState} -> #{newState}"
+        @log 'state', "#{oldState} -> #{newState}"
         @__state = newState
 
         # state-transition tasks
@@ -125,6 +124,9 @@ class Service
                 for callback in @readyCallbacks
                     callback()
             @readyCallbacks = []
+
+    log: (feature, msg) ->
+        console.log "[#{@name} #{feature}] #{msg}"
 
 module.exports =
     ServiceManager: ServiceManager
