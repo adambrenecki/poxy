@@ -21,9 +21,12 @@ class ServiceManager
         if @services[name]?
             return @services[name]
         else
-            service = new Service(this, name)
-            @services[name] = service
-            return service
+            if fs.existsSync "#{@config.dir}/#{name}"
+                service = new Service(this, name)
+                @services[name] = service
+                return service
+            else
+                return @getService name.match(/\.(.*)/)[1]
 
 class Service
     constructor: (serviceManager, name) ->
