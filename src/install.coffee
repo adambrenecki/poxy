@@ -1,17 +1,26 @@
 fs = require 'fs'
 childProcess = require 'child_process'
 async = require 'async'
+config = require './config'
 require 'handlebars'
 
-writeTemplateToFile = (templatePath, filePath, callback, context) ->
+writeTemplateToFile = (templatePath, filePath, rootOwned, callback, context) ->
     console.log "# rendering #{templatePath} to #{filePath}"
     template = require templatePath
     content = template(context)
     fs.writeFile filePath, content, callback
+    if not rootOwned
+        uid = parseInt process.env.SUDO_UID
+        gid = parseInt process.env.SUDO_GID
+        fs.chownSync filePath, uid, gid
 
-checkCall = (cmd, args, callback) ->
+checkCall = (cmd, args, rootOwned, callback) ->
     console.log "#{cmd} #{args.join(" ")}"
-    proc = childProcess.spawn(cmd, args)
+    options = {}
+    if not rootOwned
+        options.uid = parseInt process.env.SUDO_UID
+        options.gid = parseInt process.env.SUDO_GID
+    proc = childProcess.spawn(cmd, args, options)
     proc.stdout.on 'data', (data) ->
         console.log '' + data
     proc.stderr.on 'data', (data) ->
@@ -32,20 +41,22 @@ module.exports =
             process.exit(1)
 
         plistLocation = process.env.HOME + "/Library/LaunchAgents/au.id.brenecki.adam.poxy.plist"
-        plistLocationIpfw = "/Library/LaunchAgents/au.id.brenecki.adam.poxy.ipfw.plist"
+        plistLocationIpfw = "/Library/LaunchDaemons/au.id.brenecki.adam.poxy.ipfw.plist"
 
         async.series [
-            (cb) -> writeTemplateToFile "./templates/plist.hbs", plistLocation, cb,
+            (cb) -> writeTemplateToFile "./templates/plist.hbs", plistLocation, false, cb,
                 nodePath: process.execPath
                 scriptPath: process.argv[1]
                 arg: "run"
-            (cb) -> checkCall "mkdir", ["-p", "/etc/resolver"], cb
-            (cb) -> writeTemplateToFile "./templates/resolver.hbs", "/etc/resolver/dev", cb, {}
-            (cb) -> writeTemplateToFile "./templates/plist-ipfw.hbs", plistLocationIpfw, cb, {}
-            (cb) -> checkCall "launchctl", ["load", plistLocation], cb
-            (cb) -> checkCall "launchctl", ["start", "au.id.brenecki.adam.poxy"], cb
-            (cb) -> checkCall "launchctl", ["load", plistLocationIpfw], cb
-            (cb) -> checkCall "launchctl", ["start", "au.id.brenecki.adam.poxy.ipfw"], cb
+            (cb) -> checkCall "mkdir", ["-p", "/etc/resolver"], true, cb
+            (cb) -> checkCall "mkdir", ["-p", config.dir], false, cb
+            (cb) -> checkCall "mkdir", ["-p", config.logdir], false, cb
+            (cb) -> writeTemplateToFile "./templates/resolver.hbs", "/etc/resolver/dev", true, cb, {}
+            (cb) -> writeTemplateToFile "./templates/plist-ipfw.hbs", plistLocationIpfw, true, cb, {}
+            (cb) -> checkCall "launchctl", ["load", plistLocation], false, cb
+            (cb) -> checkCall "launchctl", ["start", "au.id.brenecki.adam.poxy"], false, cb
+            (cb) -> checkCall "launchctl", ["load", plistLocationIpfw], true, cb
+            (cb) -> checkCall "launchctl", ["start", "au.id.brenecki.adam.poxy.ipfw"], true, cb
         ], (err) ->
             if err
                 console.log "Oh no! #{err}"
